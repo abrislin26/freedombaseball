@@ -351,6 +351,93 @@
       object-position: center 30% !important;
     }
 
+
+    /* ══ PAYMENT GATE MODAL ══ */
+    #payGateOverlay {
+      display:none; position:fixed; inset:0; z-index:9990;
+      background:rgba(0,0,0,0.85); align-items:center; justify-content:center;
+      padding:16px;
+    }
+    #payGateOverlay.open { display:flex; }
+    .pg-box {
+      background:#0d1b3e; border:1px solid rgba(255,255,255,0.15);
+      border-radius:10px; width:100%; max-width:480px;
+      padding:2rem; position:relative; max-height:90vh; overflow-y:auto;
+    }
+    .pg-header {
+      font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:2px; color:white;
+      margin-bottom:0.3rem;
+    }
+    .pg-sub {
+      color:rgba(255,255,255,0.5); font-size:0.85rem; margin-bottom:1.4rem;
+    }
+    .pg-step {
+      background:rgba(255,255,255,0.06); border-radius:6px;
+      padding:1rem 1.2rem; margin-bottom:1rem; border-left:3px solid var(--red);
+    }
+    .pg-step-num {
+      font-family:'Oswald',sans-serif; font-size:0.7rem; font-weight:700;
+      letter-spacing:2px; color:var(--red); text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .pg-step-text { color:rgba(255,255,255,0.85); font-size:0.9rem; line-height:1.5; }
+    .pg-step-text strong { color:white; }
+    .pg-amount {
+      font-family:'Oswald',sans-serif; font-size:2rem; font-weight:700;
+      color:var(--gold); display:block; margin-top:4px;
+    }
+    .pg-btn-pay {
+      width:100%; padding:14px; border-radius:4px; border:none;
+      font-family:'Barlow Condensed',sans-serif; font-weight:700;
+      font-size:1rem; letter-spacing:2px; text-transform:uppercase;
+      cursor:pointer; transition:opacity 0.2s; margin-top:0.5rem;
+    }
+    .pg-btn-stripe { background:#635bff; color:white; }
+    .pg-btn-venmo  { background:#3D95CE; color:white; }
+    .pg-btn-zelle  { background:#6D1ED4; color:white; }
+    .pg-confirm-box {
+      display:none; margin-top:1rem;
+      background:rgba(255,255,255,0.05); border-radius:6px;
+      padding:1rem; border:1px solid rgba(255,255,255,0.12);
+    }
+    .pg-confirm-box.show { display:block; }
+    .pg-confirm-label {
+      display:flex; align-items:flex-start; gap:10px;
+      color:rgba(255,255,255,0.8); font-size:0.88rem;
+      line-height:1.5; cursor:pointer; margin-bottom:1rem;
+    }
+    .pg-confirm-label input { margin-top:3px; accent-color:var(--red); flex-shrink:0; transform:scale(1.3); }
+    .pg-btn-confirm {
+      width:100%; padding:13px; border-radius:4px; border:none;
+      background:var(--red); color:white;
+      font-family:'Barlow Condensed',sans-serif; font-weight:700;
+      font-size:0.95rem; letter-spacing:2px; text-transform:uppercase;
+      cursor:pointer; opacity:0.4; transition:opacity 0.2s; pointer-events:none;
+    }
+    .pg-btn-confirm.enabled { opacity:1; pointer-events:all; }
+    .pg-cancel {
+      display:block; text-align:center; margin-top:0.8rem;
+      color:rgba(255,255,255,0.3); font-size:0.78rem; cursor:pointer;
+      text-decoration:underline;
+    }
+    .pg-cancel:hover { color:rgba(255,255,255,0.6); }
+    /* Pending badge in admin */
+    .adm-badge-pending {
+      background:#4a2008; color:#fb923c; padding:3px 10px;
+      border-radius:10px; font-size:0.72rem; font-weight:700;
+      letter-spacing:1px; text-transform:uppercase; white-space:nowrap;
+    }
+    /* Stripe success banner */
+    #stripeSuccessBanner {
+      display:none; position:fixed; top:72px; left:50%; transform:translateX(-50%);
+      background:#14532d; color:#4ade80; padding:14px 28px; border-radius:6px;
+      font-family:'Barlow Condensed',sans-serif; font-weight:700;
+      font-size:1rem; letter-spacing:1px; z-index:9998;
+      box-shadow:0 4px 20px rgba(0,0,0,0.4); white-space:nowrap;
+    }
+    #stripeSuccessBanner.show { display:block; }
+
     /* ── SECTION BASEBALL WATERMARKS ── */
     .section-ball-deco {
       position: absolute; pointer-events: none; overflow: hidden;
@@ -1001,7 +1088,7 @@
         <div class="payment-options">
           <div class="pay-chip">💸 Zelle <span class="fee-badge fee-free">FREE</span></div>
           <div class="pay-chip">💙 Venmo <span class="fee-badge fee-free">FREE</span></div>
-          <div class="pay-chip">💳 Card <span class="fee-badge fee-low">2.9%+30¢</span></div>
+          <div class="pay-chip">💳 Card <span class="fee-badge fee-low">+$11.18</span></div>
         </div>
 
         <p style="margin-top:1rem; color:rgba(255,255,255,0.5); font-size:0.8rem;">
@@ -1109,7 +1196,7 @@
               </label>
               <label class="pay-radio">
                 <input type="radio" name="payment_method" value="card" onchange="showPayInstructions('card')"/>
-                💳 Credit/Debit <span class="pay-badge badge-low">2.9%+30¢</span>
+                💳 Credit/Debit <span class="pay-badge badge-low">+$11.18</span>
               </label>
             </div>
             <div class="payment-instructions" id="payInstructions"></div>
@@ -1352,8 +1439,8 @@
       </div><div class="payment-card fade-in">
         <span class="payment-card-icon">💳</span>
         <div class="payment-card-name">Card / Online</div>
-        <span class="payment-card-fee fee-small">2.9% + 30¢</span>
-        <p>Pay by credit or debit card via our secure Stripe payment link. Convenient but has a small processing fee.</p>
+        <span class="payment-card-fee fee-small">+$11.18 Processing Fee</span>
+        <p>Pay by credit or debit card via Stripe. A $11.18 processing fee is added at checkout — you pay $386.18 total.</p>
         <a href="https://buy.stripe.com/8x2aEXdef8v10dOgbj43S00" target="_blank" class="btn btn-primary" style="margin-top:0.8rem; font-size:0.8rem; padding: 10px 20px;">Pay by Card →</a>
       </div>
     </div>
@@ -1530,7 +1617,7 @@
       Amount: <strong>$375.00</strong><br/>
       Note: Your player's name + Registration 2025`,
     card: `<strong>Pay by Card (Stripe):</strong><br/>
-      After submitting this form, you'll receive a secure payment link by email. Fee: 2.9% + $0.30 = <strong>$463.35 total</strong>.<br/>
+      Pay securely by card. A <strong>$11.18 processing fee</strong> is added at checkout — total <strong>$386.18</strong>.<br/>
       <small>We accept Visa, Mastercard, Amex, and Discover.</small>`
   };
 
@@ -1546,48 +1633,196 @@
   const REG_FEE = 375;
   const ADMIN_PW = 'Freedom2026!'; // ← Change this password
 
+  // ══ PAYMENT GATE ══
+  let _pendingPlayer = null;
+  let _pendingForm   = null;
+
   function handleRegSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const fd = new FormData(form);
-    const player = {
-      id: 'reg_' + Date.now(),
-      ts: new Date().toISOString(),
-      firstName:   fd.get('player_first') || '',
-      lastName:    fd.get('player_last')  || '',
-      dob:         fd.get('dob')          || '',
-      jerseySize:  fd.get('jersey_size')  || '',
-      jerseyNum:   fd.get('jersey_num')   || '',
-      position:    fd.get('position')     || '',
-      parentName:  fd.get('parent_name')  || '',
-      relationship:fd.get('relationship') || '',
-      email:       fd.get('email')        || '',
-      phone:       fd.get('phone')        || '',
-      ecName:      fd.get('ec_name')      || '',
-      ecPhone:     fd.get('ec_phone')     || '',
-      payment:     fd.get('payment_method') || '',
-      medical:     fd.get('medical')      || '',
-      paid:        false,
-      adminNote:   ''
-    };
+    const fd   = new FormData(form);
+    const method = fd.get('payment_method') || '';
 
-    // Save to localStorage (persistent across sessions)
-    try {
-      const existing = JSON.parse(localStorage.getItem('freedom_registrations') || '[]');
-      existing.push(player);
-      localStorage.setItem('freedom_registrations', JSON.stringify(existing));
-    } catch(err) { console.warn('Storage error:', err); }
-
-    // Also try Formspree if configured
-    if (form.action && !form.action.includes('xqenrbrq')) {
-      fetch(form.action, { method:'POST', body:fd, headers:{'Accept':'application/json'} })
-        .catch(()=>{});
+    if (!method) {
+      alert('Please select a payment method before submitting.');
+      return;
     }
 
-    document.getElementById('regSuccess').classList.add('show');
-    form.reset();
-    document.getElementById('payInstructions').classList.remove('show');
+    // Build player object — not saved yet
+    _pendingPlayer = {
+      id:           'reg_' + Date.now(),
+      ts:           new Date().toISOString(),
+      firstName:    fd.get('player_first')    || '',
+      lastName:     fd.get('player_last')     || '',
+      dob:          fd.get('dob')             || '',
+      jerseySize:   fd.get('jersey_size')     || '',
+      jerseyNum:    fd.get('jersey_num')      || '',
+      position:     fd.get('position')        || '',
+      parentName:   fd.get('parent_name')     || '',
+      relationship: fd.get('relationship')    || '',
+      email:        fd.get('email')           || '',
+      phone:        fd.get('phone')           || '',
+      ecName:       fd.get('ec_name')         || '',
+      ecPhone:      fd.get('ec_phone')        || '',
+      payment:      method,
+      medical:      fd.get('medical')         || '',
+      paid:         false,
+      status:       'pending_payment',
+      adminNote:    ''
+    };
+    _pendingForm = form;
+
+    openPayGate(method);
   }
+
+  function openPayGate(method) {
+    const overlay = document.getElementById('payGateOverlay');
+    const instrEl = document.getElementById('pgInstructions');
+    const confirmBox = document.getElementById('pgConfirmBox');
+    const confirmCheck = document.getElementById('pgConfirmCheck');
+    const confirmBtn = document.getElementById('pgConfirmBtn');
+
+    // Reset
+    confirmBox.classList.remove('show');
+    confirmCheck.checked = false;
+    confirmBtn.classList.remove('enabled');
+
+    if (method === 'card') {
+      instrEl.innerHTML = `
+        <div class="pg-step">
+          <div class="pg-step-num">Step 1</div>
+          <div class="pg-step-text">Click the button below to pay securely by card via Stripe. You will be redirected back here automatically once payment is complete.</div>
+        </div>
+        <button class="pg-btn-pay pg-btn-stripe" onclick="goToStripe()">💳 Pay $375 by Card Now →</button>`;
+    } else if (method === 'venmo') {
+      instrEl.innerHTML = `
+        <div class="pg-step">
+          <div class="pg-step-num">Step 1 — Open Venmo</div>
+          <div class="pg-step-text">Tap the button below to open Venmo and send <strong>$375</strong> to <strong>@Danielle-Obrien-13</strong>.<br/>
+          <em style="color:rgba(255,255,255,0.45);font-size:0.8rem;">Note: Send as Friends &amp; Family, NOT Goods &amp; Services.</em></div>
+        </div>
+        <button class="pg-btn-pay pg-btn-venmo" onclick="openVenmo()">💙 Open Venmo App →</button>`;
+      confirmBox.classList.add('show');
+    } else if (method === 'zelle') {
+      instrEl.innerHTML = `
+        <div class="pg-step">
+          <div class="pg-step-num">Step 1 — Send via Zelle</div>
+          <div class="pg-step-text">Open your bank app and send <strong>$375</strong> via Zelle to:<br/>
+          <strong style="font-size:1.05rem; color:var(--gold);">obriente@gmail.com</strong><br/>
+          <span style="color:rgba(255,255,255,0.5);font-size:0.8rem;">or phone: 732-674-2809</span></div>
+        </div>`;
+      confirmBox.classList.add('show');
+    }
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function goToStripe() {
+    if (!_pendingPlayer) return;
+    // Save pending reg to localStorage before leaving page
+    _pendingPlayer.paid   = false;
+    _pendingPlayer.status = 'pending_stripe';
+    savePlayerReg(_pendingPlayer);
+    // Send to Stripe — success_url must be configured in Stripe dashboard
+    // to redirect to: https://freedombaseball.com?stripe_paid=REG_ID
+    const stripeBase = 'https://buy.stripe.com/8x2aEXdef8v10dOgbj43S00';
+    const params = new URLSearchParams({
+      client_reference_id: _pendingPlayer.id,
+      prefilled_email:     _pendingPlayer.email
+    });
+    window.location.href = stripeBase + '?' + params.toString();
+  }
+
+  function openVenmo() {
+    window.open('https://venmo.com/u/Danielle-Obrien-13', '_blank');
+  }
+
+  function toggleConfirmBtn() {
+    const cb  = document.getElementById('pgConfirmCheck');
+    const btn = document.getElementById('pgConfirmBtn');
+    btn.classList.toggle('enabled', cb.checked);
+  }
+
+  function submitAfterManualPayment() {
+    if (!_pendingPlayer) return;
+    if (!document.getElementById('pgConfirmCheck').checked) return;
+    _pendingPlayer.status = 'pending_verification';
+    _pendingPlayer.paid   = false;
+    finalisReg(_pendingPlayer);
+  }
+
+  function cancelPayGate() {
+    document.getElementById('payGateOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    _pendingPlayer = null;
+  }
+
+  function savePlayerReg(player) {
+    try {
+      const regs = JSON.parse(localStorage.getItem('freedom_registrations') || '[]');
+      // Remove any existing entry with same id
+      const filtered = regs.filter(r => r.id !== player.id);
+      filtered.push(player);
+      localStorage.setItem('freedom_registrations', JSON.stringify(filtered));
+    } catch(e) { console.warn(e); }
+  }
+
+  function finalisReg(player) {
+    savePlayerReg(player);
+    // Notify Formspree
+    try {
+      const fd = new FormData();
+      Object.entries(player).forEach(([k,v]) => fd.append(k, v));
+      fetch('https://formspree.io/f/xqenrbrq', {
+        method:'POST', body:fd, headers:{'Accept':'application/json'}
+      }).catch(()=>{});
+    } catch(e){}
+
+    // Close modal and show success
+    document.getElementById('payGateOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    if (_pendingForm) {
+      _pendingForm.reset();
+      document.getElementById('payInstructions').classList.remove('show');
+    }
+    const msg = player.status === 'pending_verification'
+      ? '⏳ Registration saved! Your spot is held — the coach will confirm once payment is verified.'
+      : '✅ Registration complete! Payment confirmed.';
+    const el = document.getElementById('regSuccess');
+    el.textContent = msg;
+    el.classList.add('show');
+    _pendingPlayer = null;
+    _pendingForm   = null;
+  }
+
+  // ── Stripe return: detect ?stripe_paid param ──
+  (function checkStripeReturn() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stripe_paid') !== '1') return;
+    const regId = params.get('reg');
+    // Mark the matching pending_stripe reg as paid
+    try {
+      const regs = JSON.parse(localStorage.getItem('freedom_registrations') || '[]');
+      let matched = false;
+      regs.forEach(r => {
+        if (r.status === 'pending_stripe' && (!regId || r.id === regId)) {
+          r.paid   = true;
+          r.status = 'paid';
+          matched  = true;
+        }
+      });
+      if (matched) {
+        localStorage.setItem('freedom_registrations', JSON.stringify(regs));
+        setTimeout(() => {
+          const b = document.getElementById('stripeSuccessBanner');
+          if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 6000); }
+        }, 500);
+      }
+    } catch(e){}
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  })();
 
   function handleContactSubmit(e) {
     e.preventDefault();
@@ -1640,10 +1875,11 @@
 
   function renderStats() {
     const regs = getRegs();
-    const paid = regs.filter(r => r.paid).length;
-    const unpaid = regs.length - paid;
-    const collected = paid * REG_FEE;
-    const outstanding = unpaid * REG_FEE;
+    const paid    = regs.filter(r => r.paid).length;
+    const pending = regs.filter(r => !r.paid && r.status === 'pending_verification').length;
+    const unpaid  = regs.length - paid - pending;
+    const collected   = paid * REG_FEE;
+    const outstanding = (regs.length - paid) * REG_FEE;
     document.getElementById('admStats').innerHTML = `
       <div class="adm-stat-card">
         <div class="val">${regs.length}</div>
@@ -1652,6 +1888,10 @@
       <div class="adm-stat-card green">
         <div class="val">${paid}</div>
         <div class="lbl">Paid ✅</div>
+      </div>
+      <div class="adm-stat-card" style="border-color:#fb923c;">
+        <div class="val" style="color:#fb923c;">${pending}</div>
+        <div class="lbl">Verify Payment 🔄</div>
       </div>
       <div class="adm-stat-card red">
         <div class="val">${unpaid}</div>
@@ -1695,7 +1935,11 @@
       const payIcon = {zelle:'💸',venmo:'💙',cashapp:'💚',card:'💳'}[r.payment] || '❓';
       const statusBadge = r.paid
         ? `<span class="adm-badge-paid">✅ Paid</span>`
-        : `<span class="adm-badge-unpaid">⏳ Unpaid</span>`;
+        : r.status === 'pending_verification'
+          ? `<span class="adm-badge-pending">🔄 Verify Payment</span>`
+          : r.status === 'pending_stripe'
+            ? `<span class="adm-badge-pending">💳 Stripe Pending</span>`
+            : `<span class="adm-badge-unpaid">⏳ Unpaid</span>`;
       const toggleBtn = r.paid
         ? `<button class="adm-mark-btn adm-mark-unpaid" onclick="togglePaid('${r.id}')">Mark Unpaid</button>`
         : `<button class="adm-mark-btn adm-mark-paid" onclick="togglePaid('${r.id}')">✅ Mark Paid</button>`;
@@ -2023,6 +2267,40 @@
   <div id="lbCounter"></div>
   <button class="lb-nav" id="lbNext" onclick="lbMove(1)">›</button>
 </div>
+
+
+<!-- ══ PAYMENT GATE MODAL ══ -->
+<div id="payGateOverlay">
+  <div class="pg-box">
+    <div class="pg-header">💳 Complete Payment</div>
+    <div class="pg-sub" id="pgSub">Your registration is saved. Complete payment to confirm your spot.</div>
+
+    <!-- Amount -->
+    <div class="pg-step">
+      <div class="pg-step-num">Amount Due</div>
+      <div class="pg-step-text">2026 Freedom Baseball Registration<span class="pg-amount">$375.00</span></div>
+    </div>
+
+    <!-- Dynamic instructions -->
+    <div id="pgInstructions"></div>
+
+    <!-- Venmo/Zelle confirm checkbox section -->
+    <div class="pg-confirm-box" id="pgConfirmBox">
+      <label class="pg-confirm-label">
+        <input type="checkbox" id="pgConfirmCheck" onchange="toggleConfirmBtn()"/>
+        I confirm I have sent <strong>$375.00</strong> and the payment is complete. I understand my registration is pending coach verification.
+      </label>
+      <button class="pg-btn-confirm" id="pgConfirmBtn" onclick="submitAfterManualPayment()">
+        ✅ I've Sent Payment — Complete Registration
+      </button>
+    </div>
+
+    <span class="pg-cancel" onclick="cancelPayGate()">← Go back and edit my registration</span>
+  </div>
+</div>
+
+<!-- Stripe success banner -->
+<div id="stripeSuccessBanner">✅ Payment received! Your registration is confirmed.</div>
 
 </body>
 </html>
