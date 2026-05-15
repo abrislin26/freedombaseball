@@ -1222,7 +1222,7 @@
 <!-- ══════════════ SCHEDULE ══════════════ -->
 <section id="schedule">
   <div class="section-inner">
-    <div class="section-label fade-in">2025 Season</div>
+    <div class="section-label fade-in">2026 Season</div>
     <div class="section-title fade-in">Game <span>Schedule</span></div>
     <div class="title-bar fade-in"></div>
     <div class="section-ball-deco" aria-hidden="true">
@@ -1605,20 +1605,16 @@
       Open your bank app → Zelle → Send Money<br/>
       Recipient: <span class="handle">obriente@gmail.com</span><br/>
       Amount: <strong>$375.00</strong><br/>
-      Memo: <em>Your player's name + Registration 2025</em><br/>
-      <small>💡 Completely free — no fees for you or us.</small>`,
+      Memo: <em>Player name + 2026 Registration</em><br/>
+      <small>💡 Completely free — no fees.</small>`,
     venmo: `<strong>Send via Venmo:</strong><br/>
       Search: <span class="handle">@Danielle-Obrien-13</span><br/>
       Amount: <strong>$375.00</strong><br/>
-      ⚠️ <em>IMPORTANT: Select "Friends & Family" — NOT "Goods & Services"</em><br/>
-      Note: Your player's name + Registration 2025`,
-    cashapp: `<strong>Send via Cash App:</strong><br/>
-      $Cashtag: <span class="handle"></span><br/>
-      Amount: <strong>$375.00</strong><br/>
-      Note: Your player's name + Registration 2025`,
+      ⚠️ <em>Select "Friends &amp; Family" — NOT "Goods &amp; Services"</em><br/>
+      Note: Player name + 2026 Registration`,
     card: `<strong>Pay by Card (Stripe):</strong><br/>
-      Pay securely by card. A <strong>$11.18 processing fee</strong> is added at checkout — total <strong>$386.18</strong>.<br/>
-      <small>We accept Visa, Mastercard, Amex, and Discover.</small>`
+      A <strong>$11.18 CC processing fee</strong> is included at checkout.<br/>
+      Your total will be <strong>$386.18</strong>. We accept Visa, Mastercard, Amex, and Discover.`
   };
 
   function showPayInstructions(method) {
@@ -1932,7 +1928,7 @@
     tbody.innerHTML = regs.map((r, i) => {
       const dob = r.dob ? new Date(r.dob+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
       const regDate = new Date(r.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-      const payIcon = {zelle:'💸',venmo:'💙',cashapp:'💚',card:'💳'}[r.payment] || '❓';
+      const payIcon = {zelle:'💸',venmo:'💙',card:'💳'}[r.payment] || '❓';
       const statusBadge = r.paid
         ? `<span class="adm-badge-paid">✅ Paid</span>`
         : r.status === 'pending_verification'
