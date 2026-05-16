@@ -994,6 +994,7 @@
       .reg-grid { gap: 1.5rem; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1819,19 +1820,21 @@
   }
 
   // ══════════════════════════════════════════
-  // SUPABASE CONFIG — paste your values here
+  // SUPABASE CONFIG (JS SDK)
   // ══════════════════════════════════════════
-  const SB_URL  = 'https://vqhiwtednauoxzsbdhrc.supabase.co';
-  const SB_KEY  = 'sb_publishable_gxHLHUegfTYd7mKoiYbCFQ_bT87HLPt';
+  const SB_URL   = 'https://vqhiwtednauoxzsbdhrc.supabase.co';
+  const SB_KEY   = 'sb_publishable_gxHLHUegfTYd7mKoiYbCFQ_bT87HLPt';
   const SB_TABLE = 'registrations';
 
-  function sbHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + SB_KEY,
-      'Prefer': 'return=representation'
-    };
+  // Initialise Supabase client using the JS SDK loaded from CDN
+  let _sbClient = null;
+  function getSB() {
+    if (!_sbClient) {
+      try {
+        _sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+      } catch(e) { console.warn('Supabase init error:', e); }
+    }
+    return _sbClient;
   }
 
   // ── Save / upsert a registration ──
@@ -1858,14 +1861,14 @@
       status:        player.status || 'pending_payment',
       admin_note:    player.adminNote || ''
     };
-    try {
-      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?on_conflict=reg_id`, {
-        method: 'POST',
-        headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
-        body: JSON.stringify(row)
-      });
-    } catch(e) { console.warn('Supabase save error:', e); }
-    // Always keep localStorage as fallback
+    const sb = getSB();
+    if (sb) {
+      try {
+        const { error } = await sb.from(SB_TABLE).upsert(row, { onConflict: 'reg_id' });
+        if (error) console.warn('Supabase save error:', error.message);
+      } catch(e) { console.warn('Supabase save error:', e); }
+    }
+    // localStorage fallback
     try {
       const regs = JSON.parse(localStorage.getItem('freedom_registrations') || '[]');
       const filtered = regs.filter(r => r.id !== player.id);
@@ -1876,15 +1879,12 @@
 
   // ── Get all registrations from Supabase ──
   async function getRegsFromCloud() {
+    const sb = getSB();
+    if (!sb) return null;
     try {
-      const res = await fetch(
-        `${SB_URL}/rest/v1/${SB_TABLE}?order=ts.asc&limit=500`,
-        { headers: sbHeaders() }
-      );
-      const rows = await res.json();
-      if (!Array.isArray(rows)) return null;
-      // Map Supabase column names back to JS object shape
-      return rows.map(r => ({
+      const { data, error } = await sb.from(SB_TABLE).select('*').order('ts', { ascending: true });
+      if (error) { console.warn('Supabase fetch error:', error.message); return null; }
+      return (data || []).map(r => ({
         id:           r.reg_id,
         ts:           r.ts,
         firstName:    r.first_name,
@@ -2145,13 +2145,12 @@
     r.paid = !r.paid;
     r.status = r.paid ? 'paid' : 'pending_verification';
     // Update Supabase
-    try {
-      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: sbHeaders(),
-        body: JSON.stringify({ paid: r.paid, status: r.status })
-      });
-    } catch(e) { console.warn(e); }
+    const sb = getSB();
+    if (sb) {
+      try {
+        await sb.from(SB_TABLE).update({ paid: r.paid, status: r.status }).eq('reg_id', id);
+      } catch(e) { console.warn(e); }
+    }
     // Update localStorage too
     saveRegs(regs);
     renderAdminDash();
@@ -2163,12 +2162,12 @@
     const name = r ? (r.firstName + ' ' + r.lastName) : 'this registration';
     if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
     // Delete from Supabase
-    try {
-      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: sbHeaders()
-      });
-    } catch(e) { console.warn(e); }
+    const sb = getSB();
+    if (sb) {
+      try {
+        await sb.from(SB_TABLE).delete().eq('reg_id', id);
+      } catch(e) { console.warn(e); }
+    }
     // Delete from localStorage
     const updated = getRegs().filter(x => x.id !== id);
     saveRegs(updated);
@@ -2188,13 +2187,12 @@
     if (!admNoteId) return;
     const note = document.getElementById('admNoteText').value;
     // Update Supabase
-    try {
-      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(admNoteId)}`, {
-        method: 'PATCH',
-        headers: sbHeaders(),
-        body: JSON.stringify({ admin_note: note })
-      });
-    } catch(e) { console.warn(e); }
+    const sb = getSB();
+    if (sb) {
+      try {
+        await sb.from(SB_TABLE).update({ admin_note: note }).eq('reg_id', admNoteId);
+      } catch(e) { console.warn(e); }
+    }
     // Update localStorage
     const regs = getRegs();
     const r = regs.find(x => x.id === admNoteId);
