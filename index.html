@@ -365,15 +365,19 @@
     /* Team photo — full-width landscape at bottom of gallery */
     .gallery-item-wide {
       grid-column: 1 / -1;
-      aspect-ratio: auto;
-      max-height: none;
+      aspect-ratio: unset !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
     }
     .gallery-item-wide img {
-      object-fit: contain !important;
-      object-position: center center !important;
+      object-fit: unset !important;
+      object-position: unset !important;
       width: 100% !important;
       height: auto !important;
+      max-height: none !important;
       display: block;
+      position: static !important;
     }
 
 
@@ -456,10 +460,11 @@
     /* Stripe success banner */
     #stripeSuccessBanner {
       display:none; position:fixed; top:72px; left:50%; transform:translateX(-50%);
-      background:#14532d; color:#4ade80; padding:14px 28px; border-radius:6px;
+      background:#14532d; color:#4ade80; padding:16px 32px; border-radius:6px;
       font-family:'Barlow Condensed',sans-serif; font-weight:700;
-      font-size:1rem; letter-spacing:1px; z-index:9998;
-      box-shadow:0 4px 20px rgba(0,0,0,0.4); white-space:nowrap;
+      font-size:1.1rem; letter-spacing:1px; z-index:9998;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      text-align:center; max-width:90vw;
     }
     #stripeSuccessBanner.show { display:block; }
 
@@ -1824,16 +1829,32 @@
     } catch(e) { console.warn(e); }
   }
 
-  function finalisReg(player) {
-    savePlayerReg(player);
-    // Notify Formspree
+  function sendToFormspree(player) {
     try {
       const fd = new FormData();
-      Object.entries(player).forEach(([k,v]) => fd.append(k, v));
+      fd.append('Player Name',      player.firstName + ' ' + player.lastName);
+      fd.append('Date of Birth',    player.dob);
+      fd.append('Position',         player.position);
+      fd.append('Jersey Size',      player.jerseySize);
+      fd.append('Jersey Number',    player.jerseyNum);
+      fd.append('Parent Name',      player.parentName);
+      fd.append('Email',            player.email);
+      fd.append('Phone',            player.phone);
+      fd.append('Emergency Contact',player.ecName + ' ' + player.ecPhone);
+      fd.append('Payment Method',   player.payment);
+      fd.append('Payment Status',   player.paid ? 'PAID' : player.status);
+      fd.append('Medical Notes',    player.medical || 'None');
+      fd.append('Registration ID',  player.id);
+      fd.append('Submitted',        new Date(player.ts).toLocaleString());
       fetch('https://formspree.io/f/xqenrbrq', {
         method:'POST', body:fd, headers:{'Accept':'application/json'}
       }).catch(()=>{});
     } catch(e){}
+  }
+
+  function finalisReg(player) {
+    savePlayerReg(player);
+    sendToFormspree(player);
 
     // Close modal and show success
     document.getElementById('payGateOverlay').classList.remove('open');
@@ -1870,10 +1891,15 @@
       });
       if (matched) {
         localStorage.setItem('freedom_registrations', JSON.stringify(regs));
+        // Send paid registration to Formspree
+        const paidReg = regs.find(r => r.status === 'paid' && r.paid);
+        if (paidReg) sendToFormspree(paidReg);
         setTimeout(() => {
           const b = document.getElementById('stripeSuccessBanner');
-          if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 6000); }
-        }, 500);
+          if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 8000); }
+          // Scroll to top so they see the success banner
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 400);
       }
     } catch(e){}
     // Clean URL
@@ -2033,9 +2059,12 @@
   }
 
   function deleteReg(id) {
-    if (!confirm('Delete ' + r.firstName + ' ' + r.lastName + '? This cannot be undone.')) return;
-    const regs = getRegs().filter(r => r.id !== id);
-    saveRegs(regs);
+    const regs = getRegs();
+    const r = regs.find(x => x.id === id);
+    const name = r ? (r.firstName + ' ' + r.lastName) : 'this registration';
+    if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
+    const updated = regs.filter(x => x.id !== id);
+    saveRegs(updated);
     renderStats();
     renderTable();
   }
