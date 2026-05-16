@@ -1316,7 +1316,6 @@
       <div style="position:absolute;bottom:18px;right:28px;color:rgba(255,255,255,0.1);font-size:1.8rem;pointer-events:none;">★</div>
       <a href="https://gc.com/t/GFU2TUcEnghB" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--red);color:white;text-decoration:none;padding:12px 28px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;">📊 Follow on GameChanger</a>
     </div>
-  </div>
 </section>
 
 <!-- ══════════════ GAMECHANGER STATS ══════════════ -->
@@ -1819,14 +1818,97 @@
     _pendingPlayer = null;
   }
 
-  function savePlayerReg(player) {
+  // ══════════════════════════════════════════
+  // SUPABASE CONFIG — paste your values here
+  // ══════════════════════════════════════════
+  const SB_URL  = 'https://vqhiwtednauoxzsbdhrc.supabase.co';
+  const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxaGl3dGVkbmF1b3h6c2JkaHJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTc1MTgsImV4cCI6MjA5NDQ3MzUxOH0.Q9D3-EMgCyjLyiImQngTCqlzQmQp5Iit0XuGBXzykuE';
+  const SB_TABLE = 'registrations';
+
+  function sbHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Prefer': 'return=representation'
+    };
+  }
+
+  // ── Save / upsert a registration ──
+  async function savePlayerReg(player) {
+    // Map JS object to Supabase column names
+    const row = {
+      reg_id:        player.id,
+      ts:            player.ts,
+      first_name:    player.firstName,
+      last_name:     player.lastName,
+      dob:           player.dob,
+      jersey_size:   player.jerseySize,
+      jersey_num:    player.jerseyNum,
+      position:      player.position,
+      parent_name:   player.parentName,
+      relationship:  player.relationship,
+      email:         player.email,
+      phone:         player.phone,
+      ec_name:       player.ecName,
+      ec_phone:      player.ecPhone,
+      payment:       player.payment,
+      medical:       player.medical || '',
+      paid:          player.paid || false,
+      status:        player.status || 'pending_payment',
+      admin_note:    player.adminNote || ''
+    };
+    try {
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?on_conflict=reg_id`, {
+        method: 'POST',
+        headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(row)
+      });
+    } catch(e) { console.warn('Supabase save error:', e); }
+    // Always keep localStorage as fallback
     try {
       const regs = JSON.parse(localStorage.getItem('freedom_registrations') || '[]');
-      // Remove any existing entry with same id
       const filtered = regs.filter(r => r.id !== player.id);
       filtered.push(player);
       localStorage.setItem('freedom_registrations', JSON.stringify(filtered));
-    } catch(e) { console.warn(e); }
+    } catch(e) {}
+  }
+
+  // ── Get all registrations from Supabase ──
+  async function getRegsFromCloud() {
+    try {
+      const res = await fetch(
+        `${SB_URL}/rest/v1/${SB_TABLE}?order=ts.asc&limit=500`,
+        { headers: sbHeaders() }
+      );
+      const rows = await res.json();
+      if (!Array.isArray(rows)) return null;
+      // Map Supabase column names back to JS object shape
+      return rows.map(r => ({
+        id:           r.reg_id,
+        ts:           r.ts,
+        firstName:    r.first_name,
+        lastName:     r.last_name,
+        dob:          r.dob,
+        jerseySize:   r.jersey_size,
+        jerseyNum:    r.jersey_num,
+        position:     r.position,
+        parentName:   r.parent_name,
+        relationship: r.relationship,
+        email:        r.email,
+        phone:        r.phone,
+        ecName:       r.ec_name,
+        ecPhone:      r.ec_phone,
+        payment:      r.payment,
+        medical:      r.medical,
+        paid:         r.paid,
+        status:       r.status,
+        adminNote:    r.admin_note
+      }));
+    } catch(e) {
+      console.warn('Supabase fetch error:', e);
+      return null;
+    }
   }
 
   function sendToFormspree(player) {
@@ -1938,8 +2020,7 @@
     if (val === ADMIN_PW) {
       document.getElementById('admLogin').style.display = 'none';
       document.getElementById('admDash').style.display = 'block';
-      renderStats();
-      renderTable();
+      renderAdminDash();
     } else {
       document.getElementById('admPwError').style.display = 'block';
       document.getElementById('admPwInput').value = '';
@@ -1954,9 +2035,14 @@
   function saveRegs(regs) {
     localStorage.setItem('freedom_registrations', JSON.stringify(regs));
   }
+  // Cloud-aware version used by admin dashboard
+  async function getRegsForAdmin() {
+    const cloud = await getRegsFromCloud();
+    if (cloud && cloud.length >= 0) return cloud;
+    return getRegs(); // localStorage fallback
+  }
 
-  function renderStats() {
-    const regs = getRegs();
+  function renderStatsFromData(regs) {
     const paid    = regs.filter(r => r.paid).length;
     const pending = regs.filter(r => !r.paid && r.status === 'pending_verification').length;
     const unpaid  = regs.length - paid - pending;
@@ -1993,11 +2079,11 @@
     admFilter = f;
     document.querySelectorAll('.adm-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderTable();
+    renderTableFromData(_cachedRegs);
   }
 
-  function renderTable() {
-    let regs = getRegs();
+  function renderTableFromData(regs_in) {
+    let regs = [...(regs_in || _cachedRegs)];
     const q = (document.getElementById('admSearch').value || '').toLowerCase();
     if (admFilter === 'paid')   regs = regs.filter(r => r.paid);
     if (admFilter === 'unpaid') regs = regs.filter(r => !r.paid);
@@ -2052,21 +2138,41 @@
     }).join('');
   }
 
-  function togglePaid(id) {
-    const regs = getRegs();
+  async function togglePaid(id) {
+    const regs = await getRegsForAdmin();
     const r = regs.find(x => x.id === id);
-    if (r) { r.paid = !r.paid; saveRegs(regs); renderStats(); renderTable(); }
+    if (!r) return;
+    r.paid = !r.paid;
+    r.status = r.paid ? 'paid' : 'pending_verification';
+    // Update Supabase
+    try {
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: sbHeaders(),
+        body: JSON.stringify({ paid: r.paid, status: r.status })
+      });
+    } catch(e) { console.warn(e); }
+    // Update localStorage too
+    saveRegs(regs);
+    renderAdminDash();
   }
 
-  function deleteReg(id) {
-    const regs = getRegs();
+  async function deleteReg(id) {
+    const regs = await getRegsForAdmin();
     const r = regs.find(x => x.id === id);
     const name = r ? (r.firstName + ' ' + r.lastName) : 'this registration';
     if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
-    const updated = regs.filter(x => x.id !== id);
+    // Delete from Supabase
+    try {
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: sbHeaders()
+      });
+    } catch(e) { console.warn(e); }
+    // Delete from localStorage
+    const updated = getRegs().filter(x => x.id !== id);
     saveRegs(updated);
-    renderStats();
-    renderTable();
+    renderAdminDash();
   }
 
   function editNote(id, current) {
@@ -2078,17 +2184,36 @@
     admNoteId = null;
     document.getElementById('admNoteModal').classList.remove('open');
   }
-  function saveNote() {
+  async function saveNote() {
     if (!admNoteId) return;
+    const note = document.getElementById('admNoteText').value;
+    // Update Supabase
+    try {
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?reg_id=eq.${encodeURIComponent(admNoteId)}`, {
+        method: 'PATCH',
+        headers: sbHeaders(),
+        body: JSON.stringify({ admin_note: note })
+      });
+    } catch(e) { console.warn(e); }
+    // Update localStorage
     const regs = getRegs();
     const r = regs.find(x => x.id === admNoteId);
-    if (r) { r.adminNote = document.getElementById('admNoteText').value; saveRegs(regs); }
+    if (r) { r.adminNote = note; saveRegs(regs); }
     closeNote();
-    renderTable();
+    renderAdminDash();
   }
 
+  // Master admin refresh — loads from cloud then renders
+  async function renderAdminDash() {
+    const regs = await getRegsForAdmin();
+    _cachedRegs = regs;
+    renderStatsFromData(regs);
+    renderTableFromData(regs);
+  }
+  let _cachedRegs = [];
+
   function exportCSV() {
-    const regs = getRegs();
+    const regs = _cachedRegs.length ? _cachedRegs : getRegs();
     if (!regs.length) { alert('No registrations to export.'); return; }
     const headers = ['#','First Name','Last Name','DOB','Position','Jersey Size','Jersey #',
       'Parent/Guardian','Relationship','Email','Phone','EC Name','EC Phone',
@@ -2322,7 +2447,7 @@
       <button class="adm-filter-btn active" onclick="setFilter('all',this)">All</button>
       <button class="adm-filter-btn" onclick="setFilter('unpaid',this)">Unpaid</button>
       <button class="adm-filter-btn" onclick="setFilter('paid',this)">Paid</button>
-      <input class="adm-search" id="admSearch" placeholder="🔍  Search player or parent..." oninput="renderTable()"/>
+      <input class="adm-search" id="admSearch" placeholder="🔍  Search player or parent..." oninput="renderTableFromData(_cachedRegs)"/>
     </div>
 
     <!-- Table -->
