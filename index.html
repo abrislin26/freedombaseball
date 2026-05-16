@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Freedom Baseball | 10u USABL</title>
+  <title>10u USABL Competitive Baseball | 10u USABL</title>
+  <meta property="og:title"       content="Freedom Baseball"/>
+  <meta property="og:description" content="Freedom Baseball | 10u USABL Competitive Team — Toms River, NJ"/>
+  <meta property="og:type"        content="website"/>
+  <meta property="og:url"         content="https://trfreedombaseball.com"/>
+  <meta name="twitter:card"        content="summary_large_image"/>
+  <meta name="twitter:title"       content="Freedom Baseball"/>
+  <meta name="twitter:description" content="Freedom Baseball | 10u USABL Competitive Team — Toms River, NJ"/>
   <meta name="description" content="Freedom Baseball is a 10u USABL competitive travel baseball team based in Toms River, NJ. Register for the 2026 summer season, view tournaments, and follow live game stats on GameChanger."/>
 
   <!-- Favicon (browser tab icon) -->
@@ -1786,7 +1793,7 @@
     _pendingPlayer.status = 'pending_stripe';
     savePlayerReg(_pendingPlayer);
     // Send to Stripe — success_url must be configured in Stripe dashboard
-    // to redirect to: https://freedombaseball.com?stripe_paid=REG_ID
+    // to redirect to: https://trfreedombaseball.com?stripe_paid=REG_ID
     const stripeBase = 'https://buy.stripe.com/8x2aEXdef8v10dOgbj43S00';
     const params = new URLSearchParams({
       client_reference_id: _pendingPlayer.id,
