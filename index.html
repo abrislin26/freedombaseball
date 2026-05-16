@@ -305,7 +305,8 @@
     }
     .fade-in {
       opacity: 0;
-      transition: opacity 0.7s ease;
+      transition: opacity 0.65s ease-in-out;
+      will-change: opacity;
     }
     .fade-in.visible { opacity: 1; }
 
@@ -478,13 +479,7 @@
       color:#991b1b; font-size:0.8rem; font-weight:600;
       margin-top:6px; display:none;
     }
-    /* ── SECTION BASEBALL WATERMARKS ── */
-    .section-ball-deco {
-      position: absolute; pointer-events: none; overflow: hidden;
-      opacity: 0.045; right: -30px; top: 50%; transform: translateY(-50%);
-      width: 180px; height: 180px;
-    }
-    .section-ball-deco svg { width: 100%; height: 100%; animation: spin 30s linear infinite; }
+
     section { position: relative; }
     /* Stitch-pattern title bar */
     .title-bar-stitch {
@@ -1142,7 +1137,7 @@
         <form id="regForm" action="https://formspree.io/f/xqenrbrq" method="POST" onsubmit="handleRegSubmit(event)">
           <div class="reg-code-wrap">
             <label>🔒 Registration Code Required</label>
-            <input class="reg-code-input" id="regCodeInput" type="text" maxlength="12" placeholder="ENTER CODE" autocomplete="off"/>
+            <input class="reg-code-input" id="regCodeInput" type="text" maxlength="16" placeholder="Enter code" autocomplete="off"/>
             <div class="reg-code-error" id="regCodeError">Incorrect code. Please contact Coach O'Brien for the registration code.</div>
           </div>
 
@@ -1270,21 +1265,6 @@
     <div class="section-label fade-in">2026 Season</div>
     <div class="section-title fade-in">Tournament <span>Schedule</span></div>
     <div class="title-bar fade-in"></div>
-    <div class="section-ball-deco" aria-hidden="true">
-      <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="100" r="96" fill="#1a2540"/>
-        <path d="M100 12 C60 30, 60 170, 100 188" stroke="#C41E3A" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M100 12 C140 30, 140 170, 100 188" stroke="#C41E3A" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <line x1="68" y1="55" x2="78" y2="59" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="63" y1="85" x2="73" y2="87" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="63" y1="113" x2="73" y2="111" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="68" y1="143" x2="78" y2="139" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="132" y1="55" x2="122" y2="59" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="137" y1="85" x2="127" y2="87" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="137" y1="113" x2="127" y2="111" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="132" y1="143" x2="122" y2="139" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-      </svg>
-    </div>
 
     <div class="schedule-table-wrap fade-in">
       <table class="schedule-table" id="scheduleTable">
@@ -1346,21 +1326,6 @@
     <div class="section-label fade-in">Player Stats</div>
     <div class="section-title fade-in"><span>GameChanger</span> Integration</div>
     <div class="title-bar fade-in"></div>
-    <div class="section-ball-deco" aria-hidden="true" style="opacity:0.04; left:-30px; right:auto;">
-      <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="100" r="96" fill="#1a2540"/>
-        <path d="M100 12 C60 30, 60 170, 100 188" stroke="#C41E3A" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M100 12 C140 30, 140 170, 100 188" stroke="#C41E3A" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <line x1="68" y1="55" x2="78" y2="59" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="63" y1="85" x2="73" y2="87" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="63" y1="113" x2="73" y2="111" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="68" y1="143" x2="78" y2="139" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="132" y1="55" x2="122" y2="59" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="137" y1="85" x2="127" y2="87" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="137" y1="113" x2="127" y2="111" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="132" y1="143" x2="122" y2="139" stroke="#C41E3A" stroke-width="4" stroke-linecap="round"/>
-      </svg>
-    </div>
 
     <div class="gc-card fade-in">
       <div>⚾</div>
@@ -1663,14 +1628,20 @@
   });
 
   // ── Scroll fade-in ──
+  // Fade-in on scroll — works on mobile and desktop
   const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target); // stop watching once visible
+      }
+    });
+  }, { threshold: 0.05, rootMargin: "0px 0px 0px 0px" });
   document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
-  // Fallback: if IntersectionObserver never fires (iframe/mobile preview), show everything
+  // Safety fallback — show all after 600ms in case observer fails
   setTimeout(() => {
     document.querySelectorAll('.fade-in').forEach(el => el.classList.add('visible'));
-  }, 400);
+  }, 600);
 
 
 
@@ -1714,8 +1685,8 @@
     e.preventDefault();
     const form = e.target;
     const fd   = new FormData(form);
-    const REG_CODE = 'FREEDOMSUMMER26';
-    const enteredCode = (document.getElementById('regCodeInput').value || '').trim().toUpperCase();
+    const REG_CODE = 'freedomsummer26';
+    const enteredCode = (document.getElementById('regCodeInput').value || '').trim().toLowerCase();
     const codeError = document.getElementById('regCodeError');
     if (enteredCode !== REG_CODE) {
       codeError.style.display = 'block';
@@ -2046,7 +2017,7 @@
         <td>
           <div class="adm-action-row">
             ${toggleBtn}
-            <button class="adm-del-btn" onclick="deleteReg('${r.id}')" title="Delete">🗑</button>
+            <button class="adm-del-btn" onclick="deleteReg('${r.id}')">🗑 Delete</button>
           </div>
         </td>
       </tr>`;
@@ -2060,7 +2031,7 @@
   }
 
   function deleteReg(id) {
-    if (!confirm('Delete this registration? This cannot be undone.')) return;
+    if (!confirm('Delete ' + r.firstName + ' ' + r.lastName + '? This cannot be undone.')) return;
     const regs = getRegs().filter(r => r.id !== id);
     saveRegs(regs);
     renderStats();
@@ -2230,12 +2201,13 @@
       text-transform:uppercase; white-space:nowrap; transition:opacity 0.15s;
     }
     .adm-mark-btn:hover { opacity:0.8; }
-    .adm-mark-paid { background:#166534; color:#d1fae5; }
+    .adm-mark-paid { background:#166534; color:#d1fae5; font-size:0.8rem; }
     .adm-mark-unpaid { background:#7f1d1d; color:#fee2e2; }
     .adm-del-btn {
-      padding:4px 8px; border-radius:3px; border:none;
-      background:#374151; color:#9ca3af; cursor:pointer;
-      font-size:0.72rem; transition:0.15s;
+      padding:6px 12px; border-radius:3px; border:none;
+      background:#7f1d1d; color:#fca5a5; cursor:pointer;
+      font-size:0.78rem; font-weight:700; transition:0.15s;
+      letter-spacing:0.5px;
     }
     .adm-del-btn:hover { background:#C41E3A; color:white; }
     .adm-empty {
@@ -2263,9 +2235,30 @@
       min-height:80px; outline:none;
     }
     .adm-modal-footer { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
-    @media(max-width:600px) {
+    @media(max-width:700px) {
       .adm-stats { grid-template-columns:1fr 1fr; }
-      .adm-table th:nth-child(n+6), .adm-table td:nth-child(n+6) { display:none; }
+      /* On mobile: hide most columns, keep key ones + actions always visible */
+      .adm-table th:nth-child(3),
+      .adm-table td:nth-child(3),
+      .adm-table th:nth-child(4),
+      .adm-table td:nth-child(4),
+      .adm-table th:nth-child(5),
+      .adm-table td:nth-child(5),
+      .adm-table th:nth-child(7),
+      .adm-table td:nth-child(7),
+      .adm-table th:nth-child(8),
+      .adm-table td:nth-child(8),
+      .adm-table th:nth-child(12),
+      .adm-table td:nth-child(12),
+      .adm-table th:nth-child(13),
+      .adm-table td:nth-child(13) { display:none; }
+      /* Make action buttons stack vertically and bigger for tap */
+      .adm-action-row { flex-direction:column; gap:4px; }
+      .adm-mark-btn { font-size:0.8rem; padding:8px 10px; min-height:36px; }
+      .adm-del-btn  { font-size:0.9rem; padding:8px 10px; min-height:36px; text-align:center; }
+      .adm-bar-title { font-size:1rem; }
+      /* Make status badge bigger for mobile tap */
+      .adm-badge-paid, .adm-badge-unpaid, .adm-badge-pending { font-size:0.75rem; padding:4px 10px; }
     }
   </style>
 
